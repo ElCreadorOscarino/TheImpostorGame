@@ -1,0 +1,2217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="theme-color" content="#000000"/>
+  <meta name="apple-mobile-web-app-title" content="El Impostor"/>
+  <title>El Impostor</title>
+  <!-- PeerJS WebRTC -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <!-- Gothic / Horror Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet"/>
+
+<style>
+/* ══════════════════════════════════════════════════════
+   ROOT VARIABLES
+══════════════════════════════════════════════════════ */
+:root{
+  --blood:#8A0303;
+  --blood2:#c0392b;
+  --black:#000;
+  --dark:#0d0d0d;
+  --card:#111;
+  --border:#2a0000;
+  --white:#fff;
+  --gray:#555;
+  --blue:#1a4fa3;
+  --blue2:#2563cc;
+  --green:#1a7a3a;
+  --green2:#22a050;
+  --yellow:#a08000;
+  --yellow2:#c9a800;
+  --font-title:'Cinzel Decorative',serif;
+  --font-body:'IM Fell English',serif;
+}
+
+/* ══════════════════════════════════════════════════════
+   RESET & BASE
+══════════════════════════════════════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{
+  height:100dvh;width:100vw;overflow:hidden;
+  background:var(--black);
+  font-family:var(--font-body);
+  color:var(--blood);
+  position:fixed;top:0;left:0;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN SYSTEM
+══════════════════════════════════════════════════════ */
+.screen{
+  position:absolute;top:0;left:0;
+  width:100vw;height:100dvh;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:env(safe-area-inset-top,20px) 24px env(safe-area-inset-bottom,20px);
+  opacity:0;pointer-events:none;
+  transition:opacity .35s ease;
+  overflow:hidden;
+}
+.screen.active{opacity:1;pointer-events:all}
+
+/* ══════════════════════════════════════════════════════
+   TYPOGRAPHY
+══════════════════════════════════════════════════════ */
+.game-title{
+  font-family:var(--font-title);
+  font-size:clamp(2.2rem,9vw,3.5rem);
+  color:var(--blood);
+  text-align:center;
+  letter-spacing:.08em;
+  text-shadow:0 0 30px #8a030366,0 2px 4px #000;
+  line-height:1.1;
+  position:relative;
+}
+.game-title::after{
+  content:'';position:absolute;
+  bottom:-14px;left:50%;transform:translateX(-50%);
+  width:2px;height:0;
+  background:linear-gradient(to bottom,var(--blood),transparent);
+  border-radius:0 0 50% 50%;
+  animation:drip 3s ease-in-out infinite;
+}
+@keyframes drip{0%{height:0;opacity:1}60%{height:28px;opacity:.8}100%{height:0;opacity:0}}
+
+.game-tagline{
+  font-family:var(--font-body);
+  font-style:italic;
+  font-size:.9rem;
+  color:#8a0303aa;
+  text-align:center;
+  margin-top:18px;
+  letter-spacing:.05em;
+}
+.screen-title{
+  font-family:var(--font-title);
+  font-size:1.3rem;
+  color:var(--blood);
+  text-align:center;
+  margin-bottom:32px;
+  letter-spacing:.1em;
+}
+.section-label{
+  font-size:.75rem;
+  color:var(--blood);
+  text-transform:uppercase;
+  letter-spacing:.15em;
+  opacity:.6;
+  margin-bottom:6px;
+}
+
+/* ══════════════════════════════════════════════════════
+   BUTTONS
+══════════════════════════════════════════════════════ */
+.btn{
+  display:block;width:100%;
+  padding:14px 24px;
+  border:none;border-radius:6px;
+  font-family:var(--font-title);
+  font-size:.85rem;
+  letter-spacing:.1em;
+  cursor:pointer;
+  transition:all .2s ease;
+  text-align:center;
+  -webkit-appearance:none;
+  position:relative;overflow:hidden;
+}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+
+.btn-blood{background:var(--blood);color:var(--white)}
+.btn-blood:hover:not(:disabled){background:var(--blood2)}
+
+.btn-blue{background:var(--blue);color:var(--white)}
+.btn-blue:hover:not(:disabled){background:var(--blue2)}
+
+.btn-green{background:var(--green);color:var(--white)}
+.btn-green:hover:not(:disabled){background:var(--green2)}
+
+.btn-yellow{background:var(--yellow);color:var(--white)}
+.btn-yellow:hover:not(:disabled){background:var(--yellow2)}
+
+.btn-ghost{
+  background:transparent;
+  color:var(--blood);
+  border:1px solid var(--blood);
+}
+.btn-ghost:hover:not(:disabled){background:#8a030315}
+
+.btn-large{padding:18px 24px;font-size:1rem}
+
+/* ══════════════════════════════════════════════════════
+   INPUTS
+══════════════════════════════════════════════════════ */
+input[type=text]{
+  width:100%;
+  background:#0d0d0d;
+  border:1px solid var(--border);
+  border-radius:6px;
+  color:var(--blood);
+  font-family:var(--font-body);
+  font-size:1rem;
+  padding:14px 16px;
+  outline:none;
+  transition:border-color .2s;
+  -webkit-appearance:none;
+}
+input[type=text]::placeholder{color:#8a030360}
+input[type=text]:focus{border-color:var(--blood)}
+input[type=text].shake{animation:shake .4s ease}
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  20%,60%{transform:translateX(-8px)}
+  40%,80%{transform:translateX(8px)}
+}
+
+/* ══════════════════════════════════════════════════════
+   PROGRESS BAR
+══════════════════════════════════════════════════════ */
+.progress-track{
+  width:100%;height:6px;
+  background:var(--dark);
+  border-radius:3px;overflow:hidden;
+}
+.progress-fill{
+  height:100%;
+  background:var(--blood);
+  border-radius:3px;
+  transition:width .3s ease;
+}
+.progress-fill.danger{background:#ff2222}
+
+/* ══════════════════════════════════════════════════════
+   SPINNER
+══════════════════════════════════════════════════════ */
+.spinner{
+  width:52px;height:52px;
+  border:3px solid #2a0000;
+  border-top-color:var(--blood);
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+  margin-bottom:20px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 1: START
+══════════════════════════════════════════════════════ */
+#s-start .title-container{
+  text-align:center;
+  margin-bottom:48px;
+}
+#s-start .input-group{
+  width:100%;max-width:340px;
+  display:flex;flex-direction:column;gap:14px;
+}
+
+/* Ambient blood splatter dots */
+#s-start::before{
+  content:'';position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at 15% 20%,#8a030312 0%,transparent 40%),
+    radial-gradient(circle at 85% 70%,#8a030308 0%,transparent 40%),
+    radial-gradient(circle at 50% 90%,#8a030310 0%,transparent 30%);
+  pointer-events:none;
+}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 2: LOADING
+══════════════════════════════════════════════════════ */
+#s-loading .loading-container{
+  width:100%;max-width:340px;
+  text-align:center;
+}
+.loading-label{
+  font-family:var(--font-body);
+  font-style:italic;
+  font-size:.9rem;
+  color:var(--blood);
+  margin-bottom:16px;
+  opacity:.8;
+  min-height:1.4em;
+}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 3: MENU
+══════════════════════════════════════════════════════ */
+#s-menu .welcome-name{
+  font-style:italic;
+  font-size:1rem;
+  color:#8a030399;
+  margin-bottom:36px;
+}
+#s-menu .menu-buttons{
+  width:100%;max-width:340px;
+  display:flex;flex-direction:column;gap:16px;
+}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 4: CREATING
+══════════════════════════════════════════════════════ */
+.creating-container{
+  display:flex;flex-direction:column;
+  align-items:center;
+}
+.creating-text{
+  font-family:var(--font-body);
+  font-style:italic;
+  font-size:1rem;
+  color:var(--blood);
+  opacity:.8;
+}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 5: JOIN
+══════════════════════════════════════════════════════ */
+#s-join .input-group{
+  width:100%;max-width:340px;
+  display:flex;flex-direction:column;gap:14px;
+}
+#s-join input{
+  text-transform:uppercase;
+  text-align:center;
+  font-size:1.4rem;
+  letter-spacing:.3em;
+}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 6: LOBBY
+══════════════════════════════════════════════════════ */
+#s-lobby{
+  justify-content:flex-start;
+  padding-top:max(env(safe-area-inset-top,16px),16px);
+}
+.lobby-header{
+  width:100%;
+  display:flex;flex-direction:column;
+  align-items:center;
+  padding-bottom:16px;
+  border-bottom:1px solid var(--border);
+}
+.room-code-display{
+  display:flex;flex-direction:column;
+  align-items:center;gap:6px;
+}
+.room-code-label{
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:#8a030360;
+}
+.room-code{
+  font-family:var(--font-title);
+  font-size:2rem;
+  color:var(--blood);
+  letter-spacing:.3em;
+  text-shadow:0 0 20px #8a030355;
+}
+.btn-icon{
+  background:none;border:1px solid var(--border);
+  color:var(--blood);border-radius:4px;
+  font-family:var(--font-body);font-size:.75rem;
+  padding:4px 12px;cursor:pointer;
+  transition:all .2s;
+}
+.btn-icon:hover{border-color:var(--blood);background:#8a030315}
+
+.players-grid{
+  flex:1;width:100%;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(130px,1fr));
+  gap:10px;
+  padding:16px 0;
+  overflow-y:auto;
+  align-content:start;
+}
+.player-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:12px 10px;
+  display:flex;flex-direction:column;
+  align-items:center;gap:8px;
+  position:relative;
+  transition:border-color .2s;
+}
+.player-card.me{border-color:var(--blood)}
+.player-avatar{
+  width:42px;height:42px;
+  border-radius:50%;
+  background:var(--dark);
+  border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-title);
+  font-size:1.1rem;
+  color:var(--blood);
+}
+.player-name{
+  font-size:.75rem;
+  color:#ccc;
+  text-align:center;
+  word-break:break-word;
+  line-height:1.3;
+}
+.mic-indicator{
+  color:#555;
+  transition:color .15s,filter .15s;
+}
+.mic-indicator.active{
+  color:var(--blood);
+  filter:drop-shadow(0 0 4px var(--blood));
+  animation:mic-pulse .5s ease infinite alternate;
+}
+@keyframes mic-pulse{from{opacity:.8}to{opacity:1}}
+
+.lobby-footer{
+  width:100%;
+  display:flex;flex-direction:column;
+  gap:12px;
+  padding-top:12px;
+  border-top:1px solid var(--border);
+}
+#add-bot-btn{
+  background:transparent;
+  border:1px solid var(--blood);
+  color:var(--blood);
+}
+#add-bot-btn:hover{background:#8a030318}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 7: COUNTDOWN
+══════════════════════════════════════════════════════ */
+.countdown-container{
+  display:flex;flex-direction:column;
+  align-items:center;gap:16px;
+}
+.countdown-number{
+  font-family:var(--font-title);
+  font-size:clamp(6rem,30vw,10rem);
+  color:var(--blood);
+  text-shadow:0 0 60px #8a030388;
+  display:block;
+  line-height:1;
+}
+.countdown-number.pop{animation:pop .6s ease}
+@keyframes pop{
+  0%{transform:scale(.4);opacity:.3}
+  60%{transform:scale(1.15)}
+  100%{transform:scale(1);opacity:1}
+}
+.countdown-label{
+  font-style:italic;
+  font-size:.9rem;
+  color:#8a030377;
+  letter-spacing:.1em;
+}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 8: ROLE REVEAL
+══════════════════════════════════════════════════════ */
+.role-container{
+  display:flex;flex-direction:column;
+  align-items:center;
+  gap:14px;text-align:center;
+  width:100%;max-width:340px;
+}
+.role-title-label{
+  font-size:.8rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:#8a030377;
+}
+.role-title{
+  font-family:var(--font-title);
+  font-size:1.8rem;
+  letter-spacing:.1em;
+}
+.role-title.tripulante{color:var(--blue2);text-shadow:0 0 20px #2563cc55}
+.role-title.impostor{color:var(--blood);text-shadow:0 0 20px #8a030366;animation:flicker 2s infinite}
+@keyframes flicker{0%,100%{opacity:1}92%{opacity:1}93%{opacity:.6}94%{opacity:1}98%{opacity:.8}99%{opacity:1}}
+
+.role-word-container{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:18px 32px;
+  display:flex;flex-direction:column;
+  align-items:center;gap:6px;
+  width:100%;
+}
+.role-word-label{
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:#8a030360;
+}
+.role-word{
+  font-family:var(--font-title);
+  font-size:2rem;
+  letter-spacing:.05em;
+}
+.role-word.blue{color:var(--blue2);text-shadow:0 0 20px #2563cc44}
+.role-word.red{color:var(--blood);text-shadow:0 0 20px #8a030355}
+
+.role-desc{
+  font-style:italic;
+  font-size:.9rem;
+  color:#aaa;
+  max-width:280px;
+}
+.role-countdown{
+  font-size:.8rem;
+  color:#8a030366;
+  letter-spacing:.05em;
+}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 9: DESCRIPTION
+══════════════════════════════════════════════════════ */
+#s-description{
+  justify-content:flex-start;
+  padding-top:max(env(safe-area-inset-top,16px),16px);
+  gap:14px;
+}
+.desc-header{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--border);
+}
+.desc-word{
+  font-family:var(--font-title);
+  font-size:1.5rem;
+  letter-spacing:.08em;
+}
+.desc-word.blue{color:var(--blue2);text-shadow:0 0 15px #2563cc44}
+.desc-word.red{color:var(--blood);text-shadow:0 0 15px #8a030355}
+
+.timer-container{
+  display:flex;align-items:baseline;gap:4px;
+}
+.desc-timer{
+  font-family:var(--font-title);
+  font-size:2rem;
+  color:var(--blood);
+  min-width:2.5ch;text-align:right;
+  transition:color .3s;
+}
+.desc-timer.danger{color:#ff2222;animation:timer-pulse .5s ease infinite alternate}
+@keyframes timer-pulse{from{opacity:1}to{opacity:.5}}
+.timer-label{
+  font-size:.75rem;
+  color:#8a030377;
+}
+
+.desc-instruction{
+  font-style:italic;
+  font-size:.85rem;
+  color:#8a030388;
+  text-align:center;
+  width:100%;
+}
+
+.desc-input-container{
+  width:100%;
+  display:flex;flex-direction:column;gap:8px;
+}
+
+.desc-status-list{
+  flex:1;width:100%;
+  overflow-y:auto;
+  display:flex;flex-direction:column;gap:8px;
+}
+.desc-status-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:10px 14px;
+}
+.player-name-small{font-size:.85rem;color:#ccc}
+.status-indicator{
+  font-size:.75rem;
+  font-style:italic;
+}
+.status-indicator.done{color:#22a050}
+.status-indicator.writing{color:#a08000;animation:blink 1s ease infinite alternate}
+@keyframes blink{from{opacity:.5}to{opacity:1}}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 10: DISCUSSION
+══════════════════════════════════════════════════════ */
+#s-discussion{
+  justify-content:flex-start;
+  padding-top:max(env(safe-area-inset-top,16px),16px);
+  gap:12px;
+}
+.discussion-header{
+  width:100%;
+  display:flex;flex-direction:column;gap:10px;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--border);
+}
+.players-voice-row{
+  display:flex;flex-wrap:wrap;gap:8px;
+}
+.voice-player{
+  display:flex;align-items:center;gap:6px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:5px 10px;
+  font-size:.75rem;color:#aaa;
+  transition:border-color .2s;
+}
+.voice-player.speaking{
+  border-color:var(--blood);
+  color:var(--blood);
+}
+.voice-dot{
+  width:6px;height:6px;
+  border-radius:50%;
+  background:#555;
+  transition:background .2s;
+}
+.voice-player.speaking .voice-dot{
+  background:var(--blood);
+  box-shadow:0 0 6px var(--blood);
+  animation:voice-pulse .4s ease infinite alternate;
+}
+@keyframes voice-pulse{from{transform:scale(1)}to{transform:scale(1.5)}}
+
+.discussion-chat{
+  flex:1;width:100%;
+  overflow-y:auto;
+  display:flex;flex-direction:column;gap:8px;
+  padding:4px 0;
+  scrollbar-width:none;
+}
+.discussion-chat::-webkit-scrollbar{display:none}
+
+.chat-message{
+  display:flex;flex-direction:column;gap:3px;
+  padding:8px 12px;
+  border-radius:6px;
+  background:var(--card);
+  border:1px solid var(--border);
+  animation:msg-in .2s ease;
+}
+@keyframes msg-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.chat-message.bot{border-color:#2a0000}
+.chat-name{
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  color:var(--blood);
+  opacity:.7;
+}
+.chat-text{
+  font-size:.9rem;
+  color:#ddd;
+  line-height:1.4;
+}
+.chat-system{
+  font-style:italic;
+  font-size:.8rem;
+  color:#8a030366;
+  text-align:center;
+  padding:4px 0;
+}
+
+.discussion-footer{
+  width:100%;
+  padding-top:8px;
+  border-top:1px solid var(--border);
+}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 11: VOTING
+══════════════════════════════════════════════════════ */
+#s-voting{
+  gap:16px;
+}
+.voting-carousel{
+  width:100%;max-width:340px;
+  height:200px;
+  position:relative;
+  overflow:hidden;
+}
+.vote-card{
+  position:absolute;
+  width:100%;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:24px 20px;
+  display:flex;flex-direction:column;
+  align-items:center;gap:10px;
+  transition:all .3s ease;
+  opacity:0;transform:scale(.92);
+  pointer-events:none;
+}
+.vote-card.active{
+  opacity:1;transform:scale(1);
+  pointer-events:all;
+  border-color:var(--blood);
+}
+.vote-avatar{
+  width:56px;height:56px;
+  border-radius:50%;
+  background:var(--dark);
+  border:2px solid var(--blood);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-title);
+  font-size:1.5rem;color:var(--blood);
+}
+.vote-name{
+  font-family:var(--font-title);
+  font-size:1.1rem;
+  color:var(--blood);
+  text-align:center;
+}
+.vote-desc{
+  font-style:italic;
+  font-size:.8rem;
+  color:#888;
+  text-align:center;
+  max-width:220px;
+}
+.voting-controls{
+  display:flex;align-items:center;gap:16px;
+  width:100%;max-width:340px;
+}
+.voting-controls .btn-ghost{
+  width:auto;padding:10px 16px;
+  font-size:1.1rem;
+  flex-shrink:0;
+}
+.vote-current-name{
+  flex:1;text-align:center;
+  font-family:var(--font-title);
+  font-size:.9rem;
+  color:var(--blood);
+}
+#vote-confirm{
+  max-width:340px;
+}
+
+/* ══════════════════════════════════════════════════════
+   SCREEN 12: RESOLUTION
+══════════════════════════════════════════════════════ */
+.resolution-container{
+  display:flex;flex-direction:column;
+  align-items:center;gap:20px;
+  text-align:center;
+  padding:0 20px;
+}
+.resolution-text{
+  font-family:var(--font-title);
+  font-size:clamp(1.5rem,7vw,2.2rem);
+  color:var(--blood);
+  text-shadow:0 0 30px #8a030355;
+  line-height:1.4;
+  white-space:pre-line;
+  min-height:3em;
+}
+.resolution-sub{
+  font-style:italic;
+  font-size:.9rem;
+  color:#888;
+  max-width:300px;
+  line-height:1.5;
+}
+#resolution-continue{
+  max-width:200px;
+  transition:opacity .5s ease, transform .2s ease;
+}
+
+/* ══════════════════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════════════════ */
+.modal-overlay{
+  position:fixed;inset:0;z-index:999;
+  background:#000000cc;
+  display:flex;align-items:center;justify-content:center;
+  padding:24px;
+}
+.modal-box{
+  background:var(--dark);
+  border:1px solid var(--blood);
+  border-radius:12px;
+  padding:28px 24px;
+  width:100%;max-width:340px;
+  display:flex;flex-direction:column;gap:14px;
+}
+.modal-title{
+  font-family:var(--font-title);
+  font-size:1rem;
+  color:var(--blood);
+  text-align:center;
+  letter-spacing:.08em;
+}
+.modal-message{
+  font-style:italic;
+  font-size:.9rem;
+  color:#aaa;
+  text-align:center;
+  line-height:1.5;
+}
+.modal-buttons{
+  display:flex;gap:10px;
+}
+.modal-buttons .btn{flex:1}
+
+/* ══════════════════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════════════════ */
+#toast{
+  position:fixed;
+  bottom:max(env(safe-area-inset-bottom,24px),24px);
+  left:50%;transform:translateX(-50%) translateY(100px);
+  background:var(--card);
+  border:1px solid var(--blood);
+  color:#ddd;
+  font-family:var(--font-body);
+  font-size:.85rem;
+  padding:10px 20px;
+  border-radius:20px;
+  z-index:998;
+  transition:transform .3s ease;
+  white-space:nowrap;
+  pointer-events:none;
+}
+#toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ══════════════════════════════════════════════════════
+   SCROLLBAR (for lobby grid)
+══════════════════════════════════════════════════════ */
+.players-grid::-webkit-scrollbar{width:3px}
+.players-grid::-webkit-scrollbar-track{background:transparent}
+.players-grid::-webkit-scrollbar-thumb{background:var(--blood);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════
+     SCREEN 1: START
+══════════════════════════════════════════════════ -->
+<div class="screen active" id="s-start">
+  <div class="title-container">
+    <h1 class="game-title">El Impostor</h1>
+    <p class="game-tagline">La verdad tiene un precio. ¿Puedes descubrirlo?</p>
+  </div>
+  <div class="input-group" style="width:100%;max-width:340px;display:flex;flex-direction:column;gap:14px">
+    <input type="text" id="player-name-input" placeholder="Tu nombre..." maxlength="20" autocomplete="off" autocorrect="off" spellcheck="false"/>
+    <button class="btn btn-blood btn-large" onclick="beginGame()">COMENZAR</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SCREEN 2: LOADING
+══════════════════════════════════════════════════ -->
+<div class="screen" id="s-loading">
+  <div class="loading-container" style="width:100%;max-width:340px;text-align:center">
+    <p class="game-title" style="font-size:1.8rem;margin-bottom:32px">El Impostor</p>
+    <p class="loading-label" id="loading-status">Descargando componentes de la aplicación...</p>
+    <div class="progress-track">
+      <div class="progress-fill" id="loading-bar-fill" style="width:0%"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SCREEN 3: MENU
+══════════════════════════════════════════════════ -->
+<div class="screen" id="s-menu">
+  <p class="game-title" style="font-size:1.8rem;margin-bottom:8px">El Impostor</p>
+  <p class="welcome-name" id="menu-player-name" style="font-style:italic;font-size:.95rem;color:#8a030399;margin-bottom:40px"></p>
+  <div class="menu-buttons" style="width:100%;max-width:340px;display:flex;flex-direction:column;gap:16px">
+    <button class="btn btn-blue btn-large" onclick="createRoom()">🗡 Crear Partida</button>
+    <button class="btn btn-green btn-large" onclick="showJoinScreen()">🔍 Unirse a Partida</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SCREEN 4: CREATING
+══════════════════════════════════════════════════ -->
+<div class="screen" id="s-creating">
+  <div class="creating-container">
+    <div class="spinner"></div>
+    <p class="creating-text">Creando partida...</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SCREEN 5: JOIN
+══════════════════════════════════════════════════ -->
+<div class="screen" id="s-join">
+  <p class="screen-title">Unirse a Partida</p>
+  <div class="input-group" style="width:100%;max-width:340px;display:flex;flex-direction:column;gap:14px">
+    <input type="text" id="join-code-input" placeholder="ABC123" maxlength="6" autocomplete="off" autocorrect="off" spellcheck="false" style="text-align:center;font-size:1.8rem;letter-spacing:.3em"/>
+    <button class="btn btn-green btn-large" onclick="joinRoom()">UNIRSE</button>
+    <button class="btn btn-ghost" onclick="showScreen('s-menu')">← Volver</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SCREEN 6: LOBBY
+══════════════════════════════════════════════════ -->
+<div class="screen" id="s-lobby">
+  <div class="lobby-header" style="width:100%;display:flex;flex-direction:column;align-items:center;padding-bottom:14px;border-bottom:1px solid #2a0000;margin-bottom:4px">
+    <div class="room-code-display" style="display:flex;flex-direction:column;align-items:center;gap:4px">
+      <span class="room-code-label">Código de Sala</span>
+      <span class="room-code" id="room-code-display">------</span>
+      <button class="btn-icon" id="copy-code-btn" onclick="copyRoomCode()">Copiar</button>
+    </div>
+  </div>
+  <div class="players-grid" id="players-grid" style="flex:1;width:100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;padding:10px 0;overflow-y:auto;align-content:start"></div>
+  <div class="lobby-footer" style="width:100%;display:flex;flex-direction:column;gap:10px;padding-top:12px;border-top:1px solid #2a0000">
+    <button class="btn" id="add-bot-btn" onclick="addBot()" style="background:transparent;border:1px solid #8a0303;color:#8a0303">+ Añadir Bot</button>
+    <button class="btn btn-yellow" id="start-game-btn" style="display:none" disabled>Esperando jugadores...</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SCREEN 7: COUNTDOWN
+══════════════════════════════════════════════════ -->
+<div class="screen" id="s-countdown">
+  <div class="countdown-container">
+    <span class="countdown-number pop" id="countdown-number">3</span>
+    <p class="countdown-label">La partida comienza</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SCREEN 8: ROLE REVEAL
+══════════════════════════════════════════════════ -->
+<div class="screen" id="s-role">
+  <div class="role-container">
+    <p class="role-title-label">Tu rol es</p>
+    <h2 class="role-title tripulante" id="role-name">TRIPULANTE</h2>
+    <div class="role-word-container">
+      <p class="role-word-label">Tu palabra</p>
+      <span class="role-word blue" id="role-word">---</span>
+    </div>
+    <p class="role-desc" id="role-desc">Encuentra al impostor entre ustedes.</p>
+    <p class="role-countdown" id="role-cd">Iniciando en 5...</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SCREEN 9: DESCRIPTION
+══════════════════════════════════════════════════ -->
+<div class="screen" id="s-description">
+  <div class="desc-header" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #2a0000">
+    <span class="desc-word blue" id="desc-word">---</span>
+    <div class="timer-container">
+      <span class="desc-timer" id="desc-timer">30</span>
+      <span class="timer-label">seg</span>
+    </div>
+  </div>
+  <div class="progress-track" style="width:100%">
+    <div class="progress-fill" id="desc-progress" style="width:100%"></div>
+  </div>
+  <div style="width:100%;display:flex;flex-direction:column;gap:8px">
+    <p style="font-style:italic;font-size:.82rem;color:#8a030388;text-align:center">Describe tu palabra sin decirla directamente (1 a 3 palabras)</p>
+    <input type="text" id="desc-input" placeholder="Tu descripción..." maxlength="60" autocomplete="off" autocorrect="off" spellcheck="false"/>
+  </div>
+  <div class="desc-status-list" id="desc-status-list" style="flex:1;width:100%;overflow-y:auto;display:flex;flex-direction:column;gap:8px"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SCREEN 10: DISCUSSION
+══════════════════════════════════════════════════ -->
+<div class="screen" id="s-discussion">
+  <div class="discussion-header" style="width:100%;display:flex;flex-direction:column;gap:8px;padding-bottom:10px;border-bottom:1px solid #2a0000">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-family:var(--font-title);font-size:1rem;color:var(--blood);letter-spacing:.08em">💬 Discusión</span>
+      <span id="disc-time-label" style="font-size:.75rem;color:#8a030366;font-style:italic"></span>
+    </div>
+    <div class="players-voice-row" id="players-voice-row" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+  </div>
+  <div class="discussion-chat" id="discussion-chat" style="flex:1;width:100%;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px 0"></div>
+  <div id="disc-footer" style="width:100%;padding-top:8px;border-top:1px solid #2a0000">
+    <button class="btn btn-blood btn-large" id="go-vote-btn" style="display:none" onclick="goToVoting()">🗳 Ir a Votación</button>
+    <p id="disc-wait-msg" style="text-align:center;font-style:italic;font-size:.85rem;color:#8a030366;display:none">Esperando votación del anfitrión...</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SCREEN 11: VOTING
+══════════════════════════════════════════════════ -->
+<div class="screen" id="s-voting" style="gap:16px">
+  <p class="screen-title" style="margin-bottom:0">🗳 ¿Quién es el Impostor?</p>
+  <div class="voting-carousel" id="voting-carousel" style="width:100%;max-width:340px;height:200px;position:relative;overflow:hidden"></div>
+  <div class="voting-controls" style="display:flex;align-items:center;gap:16px;width:100%;max-width:340px">
+    <button class="btn btn-ghost" id="vote-prev" onclick="prevVoteCard()" style="width:auto;padding:10px 18px;font-size:1.1rem">◀</button>
+    <span class="vote-current-name" id="vote-current-name" style="flex:1;text-align:center;font-family:var(--font-title);font-size:.9rem;color:var(--blood)">---</span>
+    <button class="btn btn-ghost" id="vote-next" onclick="nextVoteCard()" style="width:auto;padding:10px 18px;font-size:1.1rem">▶</button>
+  </div>
+  <button class="btn btn-blood btn-large" id="vote-confirm" style="width:100%;max-width:340px">Seleccionar</button>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SCREEN 12: RESOLUTION
+══════════════════════════════════════════════════ -->
+<div class="screen" id="s-resolution">
+  <div class="resolution-container">
+    <p class="resolution-text" id="resolution-text"></p>
+    <p class="resolution-sub" id="resolution-sub"></p>
+    <div id="resolution-words" style="display:flex;flex-direction:column;gap:6px;align-items:center;opacity:0;transition:opacity .5s;margin-top:4px"></div>
+    <button class="btn btn-blood" id="resolution-continue" style="opacity:0;max-width:220px;transition:opacity .6s ease">Continuar →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     MODAL
+══════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal" style="display:none">
+  <div class="modal-box">
+    <h3 class="modal-title" id="modal-title">Advertencia</h3>
+    <p class="modal-message" id="modal-message"></p>
+    <div class="modal-buttons">
+      <button class="btn btn-ghost" id="modal-cancel">Cancelar</button>
+      <button class="btn btn-green" id="modal-confirm">Continuar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════════════════════
+     AUDIO ELEMENTS (remote P2P streams)
+══════════════════════════════════════════════════ -->
+<div id="audio-container" style="display:none"></div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   🔑  CONFIGURACIÓN — COLOCA TU CLAVE DE API DE GROQ AQUÍ
+   ════════════════════════════════════════════════════════════════ */
+const GROQ_API_KEY = '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'; // ← PON TU CLAVE AQUÍ
+
+/* ════════════════════════════════════════════════════════════════
+   CONSTANTES
+════════════════════════════════════════════════════════════════ */
+const GROQ_MODEL   = 'llama-3.1-8b-instant';
+const GROQ_URL     = 'https://api.groq.com/openai/v1/chat/completions';
+const PEER_CONFIG  = { host:'0.peerjs.com', port:443, secure:true, path:'/' };
+const DESC_TIME    = 30; // seconds
+
+const WORD_PAIRS = [
+  {n:'Pizza',      i:'Lasaña'},     {n:'Avión',      i:'Helicóptero'},
+  {n:'Tiburón',    i:'Delfín'},     {n:'Hospital',   i:'Clínica'},
+  {n:'Guitarra',   i:'Violín'},     {n:'Fútbol',     i:'Rugby'},
+  {n:'Astronauta', i:'Piloto'},     {n:'Biblioteca', i:'Archivo'},
+  {n:'Dragón',     i:'Dinosaurio'}, {n:'Sushi',      i:'Tempura'},
+  {n:'Castillo',   i:'Fortaleza'},  {n:'Diamante',   i:'Rubí'},
+  {n:'Desierto',   i:'Sabana'},     {n:'Mariposa',   i:'Polilla'},
+  {n:'Cohete',     i:'Satélite'},   {n:'Submarino',  i:'Barco'},
+  {n:'Tornado',    i:'Huracán'},    {n:'León',       i:'Tigre'},
+  {n:'Volcán',     i:'Géiser'},     {n:'Chocolate',  i:'Caramelo'},
+  {n:'Circo',      i:'Carnaval'},   {n:'Espada',     i:'Lanza'},
+  {n:'Ballena',    i:'Orca'},       {n:'Pirámide',   i:'Templo'},
+  {n:'Fantasma',   i:'Vampiro'},    {n:'Playa',      i:'Piscina'},
+];
+
+const FALLBACK_NAMES = [
+  'Carlos Ruiz','María García','Pedro Alonso','Ana Martínez','Luis Torres',
+  'Carmen López','Diego Herrera','Isabella Flores','Miguel Santos','Valentina Cruz',
+  'Sebastián Mora','Lucia Jiménez','Andrés Vargas','Sofía Peña','Fernando Gil',
+  'Gabriela Romero','Rafael Navarro','Elena Castillo','Javier Mendez','Natalia Reyes',
+];
+
+/* ════════════════════════════════════════════════════════════════
+   ESTADO DEL JUEGO
+════════════════════════════════════════════════════════════════ */
+const G = {
+  playerName:'',
+  playerId:'',
+  roomCode:'',
+  isHost:false,
+
+  /* players: [{id, name, isBot, isImpostor, word, eliminated, micActive}] */
+  players:[],
+
+  myRole:'',   // 'tripulante' | 'impostor'
+  myWord:'',
+  wordPair:null,
+
+  descriptions:{},    // {id: text}
+  descStatus:{},      // {id: 'writing'|'done'}
+  votes:{},           // {voterId: targetId}
+  myVote:null,
+  eliminated:[],      // [id, id, ...]
+
+  botNamesPool:[...FALLBACK_NAMES],
+
+  peer:null,
+  connections:{},   // {peerId: DataConnection}
+  mediaCalls:{},    // {peerId: MediaConnection}
+  localStream:null,
+
+  audioCtx:null,
+  micAnalyzer:null,
+  analyzerData:null,
+  speechRec:null,
+  botSpeaking:false,
+  discContext:[],
+
+  musicCtx:null,
+  descTimerRef:null,
+  descSecondsLeft:DESC_TIME,
+  countdownRef:null,
+  roleCountRef:null,
+  micMonitorRef:null,
+  currentScreen:'s-start',
+  votingIndex:0,
+  votable:[],
+};
+
+/* ════════════════════════════════════════════════════════════════
+   SCREEN MANAGEMENT
+════════════════════════════════════════════════════════════════ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) { el.classList.add('active'); G.currentScreen = id; }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   TOAST
+════════════════════════════════════════════════════════════════ */
+function toast(msg, dur=2500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>el.classList.remove('show'), dur);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   GROQ API
+════════════════════════════════════════════════════════════════ */
+async function groq(messages, system='', maxTokens=150) {
+  try {
+    const body = {
+      model: GROQ_MODEL,
+      max_tokens: maxTokens,
+      messages: [
+        ...(system ? [{role:'system',content:system}] : []),
+        ...messages,
+      ],
+    };
+    const res = await fetch(GROQ_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${GROQ_API_KEY}`},
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return data.choices[0].message.content.trim();
+  } catch(e) {
+    console.error('Groq error:', e);
+    return null;
+  }
+}
+
+async function fetchBotNames() {
+  const r = await groq(
+    [{role:'user', content:'Dame exactamente 8 nombres hispanohablantes realistas (mezcla de géneros, sin repetir). Responde SOLO con los nombres separados por comas.'}],
+    'Eres un generador de nombres. Responde SOLO con la lista separada por comas, sin numeración ni explicación.',
+    80
+  );
+  if (r) {
+    const names = r.split(',').map(n=>n.trim()).filter(n=>n.length>1);
+    if (names.length >= 4) {
+      G.botNamesPool = [...names, ...FALLBACK_NAMES].filter((v,i,a)=>a.indexOf(v)===i);
+    }
+  }
+}
+
+async function groqBotDescription(name, word, isImpostor) {
+  const prompt = isImpostor
+    ? `Estás en un juego de palabras ocultas. Tu palabra asignada es "${word}", pero todos los demás tienen una palabra diferente del mismo tema. Debes dar UNA descripción de 1 a 3 palabras que suene creíble para el grupo sin revelar que tienes una palabra diferente.`
+    : `Estás en un juego de palabras ocultas. Tu palabra es "${word}". Describe tu palabra en 1 a 3 palabras sin decirla directamente.`;
+  const r = await groq(
+    [{role:'user', content:prompt}],
+    'Responde SOLO con 1 a 3 palabras descriptivas. Sin puntuación final, sin comillas, sin explicaciones.',
+    15
+  );
+  return r || (isImpostor ? 'algo especial' : word.split(' ')[0].toLowerCase());
+}
+
+async function groqBotVote(bot, players, descs) {
+  const others = players.filter(p=>!p.eliminated && p.id!==bot.id);
+  const lines = others.map(p=>`${p.name}: "${descs[p.id]||'sin descripción'}"`).join('\n');
+  const names = others.map(p=>p.name).join(', ');
+  const r = await groq(
+    [{role:'user', content:
+      `Eres ${bot.name} en un juego de deducción. Tu palabra es "${bot.word}".\n` +
+      `${bot.isImpostor ? 'ERES EL IMPOSTOR — vota por alguien que no sea sospechoso de ti.' : 'Eres tripulante. Encuentra al impostor.'}\n` +
+      `Descripciones:\n${lines}\n\n¿A quién votas? Responde SOLO con el nombre exacto de: ${names}`
+    }],
+    'Responde SOLO con el nombre exacto del jugador. Sin explicaciones.',
+    15
+  );
+  if (r) {
+    const found = others.find(p=>r.toLowerCase().includes(p.name.toLowerCase()));
+    if (found) return found.id;
+  }
+  return others[Math.floor(Math.random()*others.length)]?.id;
+}
+
+async function groqBotResponse(bot, transcript, context) {
+  const ctx = context.slice(-6).join('\n');
+  const r = await groq(
+    [{role:'user', content:
+      `Contexto:\n${ctx}\n\nAlguien acaba de decir: "${transcript}"\n\nResponde como ${bot.name}:`
+    }],
+    `Eres ${bot.name} en un juego de deducción social. Tu palabra es "${bot.word}". ` +
+    `${bot.isImpostor ? 'ERES EL IMPOSTOR. Finge que tienes la misma palabra que los demás. Defiéndete o desvía la sospecha.' : 'Eres un jugador normal. Argumenta quién crees que es el impostor.'} ` +
+    `Responde de manera COMPLETAMENTE NATURAL en español, como si hablaras en voz alta. ` +
+    `SIN asteriscos, SIN acotaciones, SIN "uhh", SIN texto entre paréntesis. ` +
+    `Una o dos oraciones máximo, naturales y fluidas.`,
+    90
+  );
+  return r;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   PEERJS — SETUP
+════════════════════════════════════════════════════════════════ */
+function makePeerId(code) { return `imps-${code.toLowerCase()}`; }
+
+function initPeer(id) {
+  return new Promise((resolve, reject) => {
+    let peer;
+    try {
+      peer = new Peer(id, PEER_CONFIG);
+    } catch(e) {
+      return reject(e);
+    }
+    const timeout = setTimeout(()=>reject(new Error('Timeout conectando PeerJS')), 12000);
+    peer.on('open', ()=>{ clearTimeout(timeout); G.peer=peer; resolve(peer); });
+    peer.on('error', err=>{ clearTimeout(timeout); reject(err); });
+    peer.on('connection', conn=>handleIncomingConn(conn));
+    peer.on('call', call=>handleIncomingCall(call));
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════
+   P2P MESSAGING
+════════════════════════════════════════════════════════════════ */
+function sendAll(data) {
+  Object.values(G.connections).forEach(c=>{ try{c.send(data)}catch(e){} });
+}
+function sendHost(data) {
+  const c = Object.values(G.connections)[0];
+  if (c) try{c.send(data)}catch(e){}
+}
+
+function handleIncomingConn(conn) {
+  conn.on('open', ()=>{
+    G.connections[conn.peer] = conn;
+    conn.on('data', data=>handleMsg(data, conn.peer));
+    conn.on('close', ()=>{
+      delete G.connections[conn.peer];
+      if (G.isHost) {
+        G.players = G.players.map(p=>p.id===conn.peer ? {...p, eliminated:true} : p);
+        updateLobbyUI();
+        sendAll({type:'player_list', players:G.players});
+      }
+    });
+    if (G.isHost) {
+      conn.send({type:'player_list', players:G.players});
+    }
+  });
+  conn.on('data', data=>{
+    if (!G.connections[conn.peer]) G.connections[conn.peer]=conn;
+    handleMsg(data, conn.peer);
+  });
+}
+
+function handleIncomingCall(call) {
+  call.answer(G.localStream||undefined);
+  call.on('stream', stream=>{
+    playRemoteStream(call.peer, stream);
+    G.mediaCalls[call.peer]=call;
+  });
+}
+
+function playRemoteStream(peerId, stream) {
+  let a = document.getElementById(`aud-${peerId}`);
+  if (!a) {
+    a = document.createElement('audio');
+    a.id = `aud-${peerId}`;
+    a.autoplay = true;
+    a.setAttribute('playsinline','');
+    document.getElementById('audio-container').appendChild(a);
+  }
+  a.srcObject = stream;
+}
+
+function handleMsg(data, fromId) {
+  switch(data.type) {
+    case 'join':
+      if (!G.isHost) break;
+      { const ex=G.players.find(p=>p.id===fromId);
+        if (ex) ex.name=data.name;
+        else G.players.push({id:fromId,name:data.name,isBot:false,eliminated:false,micActive:false});
+        updateLobbyUI();
+        sendAll({type:'player_list', players:G.players});
+      }
+      break;
+
+    case 'player_list':
+      G.players = data.players;
+      if (G.currentScreen==='s-lobby') updateLobbyUI();
+      break;
+
+    case 'role_assign':
+      G.myRole = data.role;
+      G.myWord = data.word;
+      G.wordPair = data.wordPair;
+      break;
+
+    case 'game_start':
+      G.players  = data.players;
+      G.wordPair = data.wordPair;
+      generateBotDescriptions();
+      startCountdown();
+      break;
+
+    case 'description_typing':
+      if (G.isHost) {
+        G.descStatus[fromId]='writing';
+        sendAll({type:'desc_update', descs:G.descriptions, status:G.descStatus});
+      }
+      break;
+
+    case 'desc_submit':
+      if (G.isHost) {
+        G.descriptions[fromId]=data.text;
+        G.descStatus[fromId]='done';
+        sendAll({type:'desc_update', descs:G.descriptions, status:G.descStatus});
+      }
+      break;
+
+    case 'desc_update':
+      G.descriptions=data.descs;
+      G.descStatus=data.status;
+      renderDescStatus();
+      break;
+
+    case 'discussion_start':
+      showScreen('s-discussion');
+      startDiscussionPhase();
+      break;
+
+    case 'voting_start':
+      showScreen('s-voting');
+      startVotingUI();
+      break;
+
+    case 'resolution':
+      showResolution(data.ename, data.wasImpostor, data.impostorName, data.wordPair);
+      break;
+
+    case 'lobby_reset':
+      resetForLobby(data.players);
+      break;
+
+    case 'next_round':
+      G.players=data.players;
+      G.descriptions={};
+      G.descStatus={};
+      G.votes={};
+      G.myVote=null;
+      generateBotDescriptions();
+      startCountdown();
+      break;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SCREEN 1 → LOADING → MENU
+════════════════════════════════════════════════════════════════ */
+function beginGame() {
+  const inp = document.getElementById('player-name-input');
+  const name = inp.value.trim();
+  if (!name) { inp.classList.add('shake'); setTimeout(()=>inp.classList.remove('shake'),500); return; }
+  G.playerName = name;
+  showScreen('s-loading');
+
+  const bar  = document.getElementById('loading-bar-fill');
+  const lbl  = document.getElementById('loading-status');
+  const steps = [
+    [15, 'Inicializando motores...'],
+    [30, 'Cargando módulos de red...'],
+    [50, 'Conectando WebRTC...'],
+    [70, 'Preparando IA de bots...'],
+    [88, 'Sincronizando componentes...'],
+    [100,'¡Todo listo!'],
+  ];
+  let si=0;
+  const iv = setInterval(()=>{
+    if (si<steps.length){
+      const [pct,txt]=steps[si++];
+      if(bar) bar.style.width=pct+'%';
+      if(lbl) lbl.textContent=txt;
+    } else {
+      clearInterval(iv);
+      setTimeout(()=>{
+        const nm=document.getElementById('menu-player-name');
+        if(nm) nm.textContent=`¡Hola, ${G.playerName}!`;
+        showScreen('s-menu');
+        fetchBotNames(); // pre-cargar nombres en background
+      }, 400);
+    }
+  }, 480);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   CREATE ROOM
+════════════════════════════════════════════════════════════════ */
+async function createRoom() {
+  showScreen('s-creating');
+  G.isHost = true;
+  G.roomCode = genCode();
+  G.playerId = makePeerId(G.roomCode)+'-host';
+
+  try {
+    await initPeer(makePeerId(G.roomCode));
+    G.playerId = G.peer.id;
+    G.players = [{id:G.playerId, name:G.playerName, isBot:false, eliminated:false, micActive:false}];
+    showScreen('s-lobby');
+    updateLobbyUI();
+  } catch(e) {
+    alert('Error al crear sala: '+e.message);
+    showScreen('s-menu');
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   JOIN ROOM
+════════════════════════════════════════════════════════════════ */
+function showJoinScreen() {
+  showScreen('s-join');
+  const inp=document.getElementById('join-code-input');
+  if(inp) inp.value='';
+}
+
+async function joinRoom() {
+  const inp=document.getElementById('join-code-input');
+  const code=(inp?.value||'').trim().toUpperCase();
+  if (code.length!==6){toast('Ingresa 6 caracteres'); return;}
+
+  G.isHost=false;
+  G.roomCode=code;
+  G.playerId='player-'+Math.random().toString(36).substr(2,8);
+
+  showScreen('s-creating');
+  try {
+    await initPeer(G.playerId);
+    const hostId=makePeerId(code);
+    const conn=G.peer.connect(hostId,{reliable:true});
+
+    conn.on('open',()=>{
+      G.connections['host']=conn;
+      conn.on('data',data=>handleMsg(data,'host'));
+      conn.send({type:'join',name:G.playerName,id:G.playerId});
+      showScreen('s-lobby');
+      updateLobbyUI();
+    });
+    conn.on('error',err=>{alert('Error al unirse: '+err.message); showScreen('s-join');});
+    setTimeout(()=>{
+      if(G.currentScreen==='s-creating'){alert('No se encontró la sala. Verifica el código.'); showScreen('s-join');}
+    }, 10000);
+  } catch(e){alert('Error: '+e.message); showScreen('s-join');}
+}
+
+/* ════════════════════════════════════════════════════════════════
+   ADD BOT
+════════════════════════════════════════════════════════════════ */
+async function addBot() {
+  if (!G.isHost) return;
+  const active=G.players.filter(p=>!p.eliminated);
+  if (active.length>=8){toast('Máximo 8 jugadores'); return;}
+
+  const btn=document.getElementById('add-bot-btn');
+  if (G.botNamesPool.length===0){
+    btn.textContent='Cargando...'; btn.disabled=true;
+    await fetchBotNames();
+    btn.textContent='+ Añadir Bot'; btn.disabled=false;
+  }
+  if (G.botNamesPool.length===0){ toast('No hay nombres disponibles'); return; }
+
+  const idx=Math.floor(Math.random()*G.botNamesPool.length);
+  const botName=G.botNamesPool.splice(idx,1)[0];
+  const botId='bot-'+Date.now()+'-'+Math.random().toString(36).substr(2,4);
+
+  G.players.push({id:botId, name:botName, isBot:true, eliminated:false, micActive:false});
+  updateLobbyUI();
+  sendAll({type:'player_list', players:G.players});
+}
+
+/* ════════════════════════════════════════════════════════════════
+   LOBBY UI
+════════════════════════════════════════════════════════════════ */
+function updateLobbyUI() {
+  const rcEl=document.getElementById('room-code-display');
+  if(rcEl) rcEl.textContent=G.roomCode;
+
+  const grid=document.getElementById('players-grid');
+  if(!grid) return;
+
+  const active=G.players.filter(p=>!p.eliminated);
+  grid.innerHTML=active.map(p=>`
+    <div class="player-card ${p.id===G.playerId?'me':''}">
+      <div class="player-avatar">${p.name.charAt(0).toUpperCase()}</div>
+      <div class="player-name">${p.name}${p.isBot?' 🤖':''}${p.id===G.playerId?' (Tú)':''}</div>
+      <div class="mic-indicator ${p.micActive?'active':''}" id="mic-${p.id}">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+          <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.49 6-3.31 6-6.72h-1.7z"/>
+        </svg>
+      </div>
+    </div>
+  `).join('');
+
+  const startBtn=document.getElementById('start-game-btn');
+  if(!startBtn) return;
+  if(!G.isHost){startBtn.style.display='none'; return;}
+
+  startBtn.style.display='block';
+  const cnt=active.length;
+
+  if(cnt<=2){
+    startBtn.textContent='Esperando jugadores...';
+    startBtn.className='btn btn-yellow';
+    startBtn.disabled=true;
+    startBtn.onclick=null;
+  } else if(cnt===3){
+    startBtn.textContent='Iniciar Partida';
+    startBtn.className='btn btn-yellow';
+    startBtn.disabled=false;
+    startBtn.onclick=()=>{
+      showModal(
+        '⚠️ Partida pequeña',
+        'Las partidas con pocos jugadores suelen ser ganadas por el impostor. ¿Deseas continuar?',
+        startGame
+      );
+    };
+  } else {
+    startBtn.textContent='Iniciar Partida';
+    startBtn.className='btn btn-green';
+    startBtn.disabled=false;
+    startBtn.onclick=startGame;
+  }
+}
+
+function copyRoomCode() {
+  navigator.clipboard?.writeText(G.roomCode).then(()=>toast('¡Código copiado!')).catch(()=>toast('Código: '+G.roomCode));
+  if(!navigator.clipboard) toast('Código: '+G.roomCode);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   MODAL
+════════════════════════════════════════════════════════════════ */
+function showModal(title, msg, onOk) {
+  const m=document.getElementById('modal');
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-message').textContent=msg;
+  m.style.display='flex';
+  document.getElementById('modal-confirm').onclick=()=>{m.style.display='none'; onOk&&onOk();};
+  document.getElementById('modal-cancel').onclick=()=>{ m.style.display='none'; };
+}
+
+/* ════════════════════════════════════════════════════════════════
+   START GAME (HOST)
+════════════════════════════════════════════════════════════════ */
+async function startGame() {
+  if(!G.isHost) return;
+
+  const active=G.players.filter(p=>!p.eliminated);
+  G.wordPair=WORD_PAIRS[Math.floor(Math.random()*WORD_PAIRS.length)];
+
+  // Assign roles
+  const impIdx=Math.floor(Math.random()*active.length);
+  active.forEach((p,i)=>{
+    p.isImpostor=(i===impIdx);
+    p.word=p.isImpostor ? G.wordPair.i : G.wordPair.n;
+  });
+
+  // Set my role
+  const me=G.players.find(p=>p.id===G.playerId);
+  if(me){ G.myRole=me.isImpostor?'impostor':'tripulante'; G.myWord=me.word; }
+
+  // Send individual roles to human peers
+  Object.entries(G.connections).forEach(([pid,conn])=>{
+    const pl=G.players.find(p=>p.id===pid);
+    if(pl && !pl.isBot){
+      conn.send({type:'role_assign', role:pl.isImpostor?'impostor':'tripulante', word:pl.word, wordPair:G.wordPair});
+    }
+  });
+
+  // Broadcast game start
+  sendAll({type:'game_start', players:G.players, wordPair:G.wordPair});
+
+  generateBotDescriptions();
+  startCountdown();
+}
+
+/* ════════════════════════════════════════════════════════════════
+   COUNTDOWN
+════════════════════════════════════════════════════════════════ */
+function startCountdown() {
+  showScreen('s-countdown');
+  let n=3;
+  const el=document.getElementById('countdown-number');
+  clearInterval(G.countdownRef);
+
+  function tick(){
+    if(!el) return;
+    el.textContent = n>0 ? n : '¡Ya!';
+    el.classList.remove('pop');
+    void el.offsetWidth;
+    el.classList.add('pop');
+    if(n<=0){ clearInterval(G.countdownRef); setTimeout(showRoleScreen,600); }
+    n--;
+  }
+  tick();
+  G.countdownRef=setInterval(tick,1000);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   ROLE SCREEN
+════════════════════════════════════════════════════════════════ */
+function showRoleScreen() {
+  showScreen('s-role');
+  const rn=document.getElementById('role-name');
+  const rw=document.getElementById('role-word');
+  const rd=document.getElementById('role-desc');
+  const rc=document.getElementById('role-cd');
+
+  if(G.myRole==='impostor'){
+    rn.textContent='EL IMPOSTOR';
+    rn.className='role-title impostor';
+    rw.textContent=G.myWord;
+    rw.className='role-word red';
+    rd.textContent='Tu pista es diferente. No lo dejes saber.';
+  } else {
+    rn.textContent='TRIPULANTE';
+    rn.className='role-title tripulante';
+    rw.textContent=G.myWord;
+    rw.className='role-word blue';
+    rd.textContent='Debes encontrar al impostor entre ustedes.';
+  }
+
+  let secs=5;
+  clearInterval(G.roleCountRef);
+  const upd=()=>{ if(rc) rc.textContent=`Iniciando en ${secs}...`; };
+  upd();
+  G.roleCountRef=setInterval(()=>{
+    secs--;
+    upd();
+    if(secs<=0){ clearInterval(G.roleCountRef); startDescriptionPhase(); }
+  },1000);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   DESCRIPTION PHASE
+════════════════════════════════════════════════════════════════ */
+function startDescriptionPhase() {
+  showScreen('s-description');
+
+  const dw=document.getElementById('desc-word');
+  const di=document.getElementById('desc-input');
+  if(dw){ dw.textContent=G.myWord; dw.className=`desc-word ${G.myRole==='impostor'?'red':'blue'}`; }
+  if(di) di.value='';
+
+  G.descSecondsLeft=DESC_TIME;
+  updateDescTimer();
+  renderDescStatus();
+  startJeopardyMusic();
+
+  clearInterval(G.descTimerRef);
+  G.descTimerRef=setInterval(()=>{
+    G.descSecondsLeft--;
+    updateDescTimer();
+    if(G.descSecondsLeft<=0){
+      clearInterval(G.descTimerRef);
+      stopJeopardyMusic();
+      submitDescription(true); // auto-submit
+      if(G.isHost){
+        setTimeout(()=>{
+          sendAll({type:'discussion_start'});
+          showScreen('s-discussion');
+          startDiscussionPhase();
+        },1800);
+      }
+    }
+  },1000);
+}
+
+function updateDescTimer() {
+  const el=document.getElementById('desc-timer');
+  const pr=document.getElementById('desc-progress');
+  if(el){
+    el.textContent=G.descSecondsLeft;
+    el.className=G.descSecondsLeft<=5?'desc-timer danger':'desc-timer';
+  }
+  if(pr){
+    pr.style.width=(G.descSecondsLeft/DESC_TIME*100)+'%';
+    pr.className=G.descSecondsLeft<=5?'progress-fill danger':'progress-fill';
+  }
+}
+
+function submitDescription(auto=false) {
+  if(G.descStatus[G.playerId]==='done') return;
+  const inp=document.getElementById('desc-input');
+  const text=(inp?.value.trim())||'...';
+
+  G.descriptions[G.playerId]=text;
+  G.descStatus[G.playerId]='done';
+  if(inp) inp.disabled=true;
+
+  if(G.isHost){
+    sendAll({type:'desc_update', descs:G.descriptions, status:G.descStatus});
+  } else {
+    sendHost({type:'desc_submit', text});
+  }
+  renderDescStatus();
+  if(!auto) clearInterval(G.descTimerRef), stopJeopardyMusic();
+}
+
+function renderDescStatus() {
+  const list=document.getElementById('desc-status-list');
+  if(!list) return;
+  const active=G.players.filter(p=>!p.eliminated);
+  list.innerHTML=active.map(p=>{
+    const st=G.descStatus[p.id];
+    return `<div class="desc-status-item">
+      <span class="player-name-small">${p.name}${p.isBot?' 🤖':''}</span>
+      <span class="status-indicator ${st==='done'?'done':'writing'}">${st==='done'?'✓ Terminado':'⌨ Escribiendo...'}</span>
+    </div>`;
+  }).join('');
+}
+
+async function generateBotDescriptions() {
+  const bots=G.players.filter(p=>p.isBot&&!p.eliminated);
+  for(const bot of bots){
+    G.descStatus[bot.id]='writing';
+    if(G.isHost) sendAll({type:'desc_update', descs:G.descriptions, status:G.descStatus});
+    renderDescStatus();
+
+    await sleep(1500+Math.random()*8000);
+
+    const desc=await groqBotDescription(bot.name, bot.word, !!bot.isImpostor);
+    G.descriptions[bot.id]=desc;
+    G.descStatus[bot.id]='done';
+
+    if(G.isHost) sendAll({type:'desc_update', descs:G.descriptions, status:G.descStatus});
+    renderDescStatus();
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   DISCUSSION PHASE
+════════════════════════════════════════════════════════════════ */
+async function startDiscussionPhase() {
+  G.discContext=[];
+  G.botSpeaking=false;
+
+  renderVoiceRow();
+  renderDiscussionChat();
+
+  // Show vote button only for host
+  const gvb=document.getElementById('go-vote-btn');
+  const dwm=document.getElementById('disc-wait-msg');
+  if(G.isHost){ if(gvb) gvb.style.display='block'; if(dwm) dwm.style.display='none'; }
+  else{ if(gvb) gvb.style.display='none'; if(dwm) dwm.style.display='block'; }
+
+  // Start mic
+  await startMicAudio();
+  startSpeechRecognition();
+}
+
+function renderVoiceRow() {
+  const row=document.getElementById('players-voice-row');
+  if(!row) return;
+  const active=G.players.filter(p=>!p.eliminated);
+  row.innerHTML=active.map(p=>`
+    <div class="voice-player" id="vp-${p.id}">
+      <div class="voice-dot" id="vd-${p.id}"></div>
+      <span>${p.name}${p.isBot?' 🤖':''}</span>
+    </div>
+  `).join('');
+}
+
+function renderDiscussionChat() {
+  const chat=document.getElementById('discussion-chat');
+  if(!chat) return;
+  chat.innerHTML='<div class="chat-system">💬 Discusión iniciada — busquen al impostor</div>';
+
+  // Show descriptions as first messages
+  const active=G.players.filter(p=>!p.eliminated);
+  active.forEach(p=>{
+    if(G.descriptions[p.id]) addChat(p.name, `"${G.descriptions[p.id]}"`, p.isBot);
+  });
+}
+
+function addChat(name, text, isBot=false) {
+  const chat=document.getElementById('discussion-chat');
+  if(!chat) return;
+  const div=document.createElement('div');
+  div.className=`chat-message ${isBot?'bot':'human'}`;
+  div.innerHTML=`<span class="chat-name">${name}</span><span class="chat-text">${text}</span>`;
+  chat.appendChild(div);
+  chat.scrollTop=chat.scrollHeight;
+}
+
+async function startMicAudio() {
+  try {
+    G.localStream=await navigator.mediaDevices.getUserMedia({
+      audio:{echoCancellation:true,noiseSuppression:true,sampleRate:44100}
+    });
+    G.audioCtx=new AudioContext();
+    const src=G.audioCtx.createMediaStreamSource(G.localStream);
+    const an=G.audioCtx.createAnalyser();
+    an.fftSize=256;
+    src.connect(an);
+    G.micAnalyzer=an;
+    G.analyzerData=new Uint8Array(an.frequencyBinCount);
+    monitorMic();
+
+    // P2P audio calls (host calls all peers)
+    if(G.isHost){
+      Object.keys(G.connections).forEach(pid=>{
+        if(!G.mediaCalls[pid]&&G.peer){
+          const call=G.peer.call(pid,G.localStream);
+          call.on('stream',stream=>{ playRemoteStream(pid,stream); G.mediaCalls[pid]=call; });
+        }
+      });
+    }
+  } catch(e){ console.warn('Mic error:',e); addChat('Sistema','⚠ Sin acceso al micrófono',false); }
+}
+
+function monitorMic() {
+  if(!G.micAnalyzer||G.currentScreen==='s-resolution'||G.currentScreen==='s-voting') return;
+  G.micAnalyzer.getByteFrequencyData(G.analyzerData);
+  const avg=G.analyzerData.reduce((a,b)=>a+b,0)/G.analyzerData.length;
+  const speaking=avg>14;
+  setVoiceActive(G.playerId, speaking);
+  G.micMonitorRef=requestAnimationFrame(monitorMic);
+}
+
+function setVoiceActive(id, active) {
+  const vp=document.getElementById(`vp-${id}`);
+  const vd=document.getElementById(`vd-${id}`);
+  const mi=document.getElementById(`mic-${id}`);
+  if(vp) vp.classList.toggle('speaking',active);
+  if(vd) vd.style.background=active?'var(--blood)':'#555';
+  if(mi) mi.classList.toggle('active',active);
+}
+
+function startSpeechRecognition() {
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ addChat('Sistema','⚠ SpeechRecognition no soportado en este navegador',false); return; }
+
+  G.speechRec=new SR();
+  G.speechRec.lang='es-ES';
+  G.speechRec.continuous=true;
+  G.speechRec.interimResults=false;
+  G.speechRec.maxAlternatives=1;
+
+  G.speechRec.onresult=(e)=>{
+    const t=e.results[e.results.length-1][0].transcript.trim();
+    if(!t||t.length<2) return;
+    G.discContext.push(`${G.playerName}: ${t}`);
+    addChat(G.playerName, t, false);
+
+    // Trigger random bot response
+    if(!G.botSpeaking){
+      const bots=G.players.filter(p=>p.isBot&&!p.eliminated);
+      if(bots.length>0){
+        const bot=bots[Math.floor(Math.random()*bots.length)];
+        triggerBotResponse(bot, t);
+      }
+    }
+  };
+
+  G.speechRec.onend=()=>{
+    if(G.currentScreen==='s-discussion' && !G.botSpeaking){
+      setTimeout(()=>{ try{G.speechRec.start()}catch(e){} }, 400);
+    }
+  };
+
+  G.speechRec.onerror=(e)=>{
+    if(e.error!=='no-speech') console.warn('SR error:',e.error);
+  };
+
+  try{ G.speechRec.start(); }catch(e){}
+}
+
+async function triggerBotResponse(bot, transcript) {
+  G.botSpeaking=true;
+  await sleep(600+Math.random()*1200);
+
+  const resp=await groqBotResponse(bot, transcript, G.discContext);
+  if(resp){
+    G.discContext.push(`${bot.name}: ${resp}`);
+    addChat(bot.name, resp, true);
+    setVoiceActive(bot.id, true);
+    await speakBot(resp);
+    setVoiceActive(bot.id, false);
+  }
+  G.botSpeaking=false;
+
+  // Restart recognition
+  if(G.currentScreen==='s-discussion'){
+    try{ G.speechRec?.start(); }catch(e){}
+  }
+}
+
+function speakBot(text) {
+  return new Promise(resolve=>{
+    if(!window.speechSynthesis){ resolve(); return; }
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='es-ES';
+    u.rate=0.92+Math.random()*0.1;
+    u.pitch=0.85+Math.random()*0.3;
+
+    const voices=speechSynthesis.getVoices();
+    const sv=voices.find(v=>v.lang.startsWith('es'));
+    if(sv) u.voice=sv;
+
+    u.onend=resolve;
+    u.onerror=resolve;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════
+   VOTING
+════════════════════════════════════════════════════════════════ */
+function goToVoting() {
+  stopRecognition();
+  speechSynthesis.cancel();
+  if(G.localStream){ G.localStream.getTracks().forEach(t=>t.stop()); G.localStream=null; }
+  if(G.micMonitorRef){ cancelAnimationFrame(G.micMonitorRef); G.micMonitorRef=null; }
+
+  if(G.isHost) sendAll({type:'voting_start'});
+  showScreen('s-voting');
+  startVotingUI();
+}
+
+function stopRecognition() {
+  if(G.speechRec){ try{G.speechRec.stop();}catch(e){} G.speechRec=null; }
+}
+
+function startVotingUI() {
+  G.votingIndex=0;
+  G.votable=G.players.filter(p=>!p.eliminated && p.id!==G.playerId);
+  renderVoteCards();
+}
+
+function renderVoteCards() {
+  const c=document.getElementById('voting-carousel');
+  if(!c||G.votable.length===0) return;
+  c.innerHTML=G.votable.map((p,i)=>`
+    <div class="vote-card ${i===0?'active':''}" id="vc-${i}">
+      <div class="vote-avatar">${p.name.charAt(0).toUpperCase()}</div>
+      <div class="vote-name">${p.name}${p.isBot?' 🤖':''}</div>
+      <div class="vote-desc">"${G.descriptions[p.id]||'sin descripción'}"</div>
+    </div>
+  `).join('');
+  updateVoteNav();
+}
+
+function updateVoteNav() {
+  const pp=document.getElementById('vote-prev');
+  const pn=document.getElementById('vote-next');
+  const nm=document.getElementById('vote-current-name');
+  const vb=document.getElementById('vote-confirm');
+
+  if(pp) pp.disabled=G.votingIndex===0;
+  if(pn) pn.disabled=G.votingIndex>=G.votable.length-1;
+
+  const cur=G.votable[G.votingIndex];
+  if(nm) nm.textContent=cur?.name||'---';
+  if(vb&&cur){ vb.textContent=`Votar por ${cur.name}`; vb.onclick=()=>castVote(cur.id); vb.disabled=false; }
+
+  document.querySelectorAll('.vote-card').forEach((el,i)=>el.classList.toggle('active',i===G.votingIndex));
+}
+
+function prevVoteCard(){ if(G.votingIndex>0){G.votingIndex--;updateVoteNav();} }
+function nextVoteCard(){ if(G.votingIndex<G.votable.length-1){G.votingIndex++;updateVoteNav();} }
+
+async function castVote(targetId) {
+  if(G.myVote) return;
+  G.myVote=targetId;
+
+  const vb=document.getElementById('vote-confirm');
+  if(vb){ vb.disabled=true; vb.textContent='Voto registrado ✓'; }
+
+  if(G.isHost){
+    G.votes[G.playerId]=targetId;
+    await generateBotVotes();
+    processVotes();
+  } else {
+    sendHost({type:'vote_cast', target:targetId});
+  }
+}
+
+async function generateBotVotes() {
+  const bots=G.players.filter(p=>p.isBot&&!p.eliminated);
+  for(const bot of bots){
+    const tid=await groqBotVote(bot, G.players, G.descriptions);
+    if(tid) G.votes[bot.id]=tid;
+  }
+}
+
+function checkAllVoted() {
+  if(!G.isHost) return;
+  const humans=G.players.filter(p=>!p.isBot&&!p.eliminated);
+  if(humans.every(p=>G.votes[p.id])) setTimeout(processVotes,800);
+}
+
+function processVotes() {
+  const counts={};
+  G.players.filter(p=>!p.eliminated).forEach(p=>counts[p.id]=0);
+  Object.values(G.votes).forEach(tid=>{ if(counts[tid]!==undefined) counts[tid]++; });
+
+  let maxV=0, elimId=null;
+  Object.entries(counts).forEach(([id,c])=>{ if(c>maxV){maxV=c;elimId=id;} });
+  if(!elimId){
+    const ids=Object.keys(counts);
+    elimId=ids[Math.floor(Math.random()*ids.length)];
+  }
+
+  const elim=G.players.find(p=>p.id===elimId);
+  if(!elim) return;
+  elim.eliminated=true;
+  G.eliminated.push(elimId);
+
+  const imp=G.players.find(p=>p.isImpostor);
+  const wasImp=elim.isImpostor||false;
+
+  const resData={type:'resolution',ename:elim.name,wasImpostor:wasImp,impostorName:imp?.name||'?',wordPair:G.wordPair};
+  sendAll(resData);
+  showResolution(elim.name, wasImp, imp?.name||'?', G.wordPair);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   RESOLUTION
+════════════════════════════════════════════════════════════════ */
+function showResolution(ename, wasImpostor, impName, wp) {
+  showScreen('s-resolution');
+
+  const rt=document.getElementById('resolution-text');
+  const rs=document.getElementById('resolution-sub');
+  const rw=document.getElementById('resolution-words');
+  const rc=document.getElementById('resolution-continue');
+
+  if(rc){ rc.style.opacity='0'; }
+
+  const msg=wasImpostor
+    ? `${ename}\nERA EL IMPOSTOR`
+    : `${ename}\nNO ERA EL IMPOSTOR`;
+
+  const sub=wasImpostor
+    ? `¡Los Tripulantes ganaron!\nEl impostor era ${ename}.`
+    : `El impostor real es ${impName}.\nLa partida continúa...`;
+
+  if(rs) rs.textContent=sub;
+
+  // Show words
+  if(rw&&wp){
+    rw.innerHTML=`
+      <div style="font-size:.78rem;color:#8a030366;text-transform:uppercase;letter-spacing:.15em">Las palabras eran</div>
+      <div style="display:flex;gap:16px;font-size:.85rem">
+        <span style="color:var(--blue2)">Tripulantes: <b>${wp.n}</b></span>
+        <span style="color:var(--blood)">Impostor: <b>${wp.i}</b></span>
+      </div>`;
+    rw.style.opacity='0';
+  }
+
+  typeWriter(rt, msg, 45, ()=>{
+    if(rw) rw.style.opacity='1';
+    if(rc){
+      rc.style.opacity='1';
+      rc.onclick=()=>{
+        if(wasImpostor){
+          // Game over — back to lobby
+          if(G.isHost){
+            const reset=G.players.map(p=>({...p,isImpostor:false,word:'',eliminated:false,micActive:false}));
+            G.players=reset; G.descriptions={}; G.descStatus={}; G.votes={}; G.myVote=null; G.eliminated=[];
+            sendAll({type:'lobby_reset', players:G.players});
+            resetForLobby(G.players);
+          }
+        } else {
+          // Next round — same roles, same words, minus eliminated
+          if(G.isHost){
+            G.descriptions={}; G.descStatus={}; G.votes={}; G.myVote=null;
+            sendAll({type:'next_round', players:G.players});
+            generateBotDescriptions();
+            startCountdown();
+          }
+        }
+      };
+    }
+  });
+}
+
+function resetForLobby(players) {
+  G.players=players;
+  G.descriptions={}; G.descStatus={}; G.votes={}; G.myVote=null;
+  G.eliminated=[]; G.myRole=''; G.myWord=''; G.wordPair=null;
+  showScreen('s-lobby');
+  updateLobbyUI();
+}
+
+/* ════════════════════════════════════════════════════════════════
+   JEOPARDY MUSIC (Web Audio API)
+════════════════════════════════════════════════════════════════ */
+function startJeopardyMusic() {
+  try {
+    G.musicCtx=new AudioContext();
+    const ctx=G.musicCtx;
+    const master=ctx.createGain();
+    master.gain.value=0.14;
+    master.connect(ctx.destination);
+
+    // Jeopardy-inspired melody (frequencies in Hz, duration in seconds)
+    const melody=[
+      [392,.45],[294,.22],[330,.22],[294,.22],
+      [392,.45],[294,.45],[262,.9],
+      [392,.45],[294,.22],[330,.22],[294,.22],
+      [392,.22],[440,.22],[392,.22],[349,.22],[330,.9],
+      [330,.45],[262,.22],[294,.22],[262,.22],
+      [330,.45],[262,.45],[247,.9],
+      [392,.45],[294,.22],[330,.22],[294,.22],
+      [392,.45],[440,.45],[523,.9],
+    ];
+
+    let t=ctx.currentTime+0.05;
+    melody.forEach(([freq,dur])=>{
+      const osc=ctx.createOscillator();
+      const g=ctx.createGain();
+      osc.connect(g); g.connect(master);
+      osc.type='triangle';
+      osc.frequency.value=freq;
+      g.gain.setValueAtTime(0,t);
+      g.gain.linearRampToValueAtTime(1,t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001,t+dur-0.02);
+      osc.start(t); osc.stop(t+dur);
+      t+=dur;
+    });
+  } catch(e){ console.warn('Audio error:',e); }
+}
+
+function stopJeopardyMusic() {
+  if(G.musicCtx){ try{G.musicCtx.close();}catch(e){} G.musicCtx=null; }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   UTILITIES
+════════════════════════════════════════════════════════════════ */
+function genCode() {
+  const c='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  return Array.from({length:6},()=>c[Math.floor(Math.random()*c.length)]).join('');
+}
+
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+function typeWriter(el, text, speed=45, cb) {
+  if(!el) return;
+  el.textContent='';
+  let i=0;
+  (function tick(){
+    if(i<text.length){ el.textContent+=text[i++]; setTimeout(tick,speed); }
+    else if(cb) cb();
+  })();
+}
+
+/* ════════════════════════════════════════════════════════════════
+   INIT — EVENT LISTENERS
+════════════════════════════════════════════════════════════════ */
+window.addEventListener('load',()=>{
+  // Enter on name input
+  const ni=document.getElementById('player-name-input');
+  if(ni) ni.addEventListener('keypress',e=>{ if(e.key==='Enter') beginGame(); });
+
+  // Join code: uppercase + enter
+  const ji=document.getElementById('join-code-input');
+  if(ji){
+    ji.addEventListener('input',e=>{ e.target.value=e.target.value.toUpperCase(); });
+    ji.addEventListener('keypress',e=>{ if(e.key==='Enter') joinRoom(); });
+  }
+
+  // Description input: typing status + enter to submit
+  const di=document.getElementById('desc-input');
+  if(di){
+    di.addEventListener('input',()=>{
+      if(G.descStatus[G.playerId]!=='done'){
+        G.descStatus[G.playerId]='writing';
+        if(!G.isHost) sendHost({type:'description_typing'});
+        renderDescStatus();
+      }
+    });
+    di.addEventListener('keypress',e=>{ if(e.key==='Enter'){ e.preventDefault(); submitDescription(); } });
+  }
+
+  // Touch swipe on voting carousel
+  let tsX=0;
+  const vc=document.getElementById('voting-carousel');
+  if(vc){
+    vc.addEventListener('touchstart',e=>{ tsX=e.touches[0].clientX; },{passive:true});
+    vc.addEventListener('touchend',e=>{
+      const dx=e.changedTouches[0].clientX-tsX;
+      if(Math.abs(dx)>40){ dx>0?prevVoteCard():nextVoteCard(); }
+    },{passive:true});
+  }
+
+  // Start on start screen
+  showScreen('s-start');
+
+  // Preload voices for speechSynthesis
+  if(window.speechSynthesis){
+    speechSynthesis.getVoices();
+    speechSynthesis.onvoiceschanged=()=>{ speechSynthesis.getVoices(); };
+  }
+});
+
+// Handle incoming P2P vote (non-host)
+window.addEventListener('_vote_msg',(e)=>{
+  if(!G.isHost) return;
+  const {fromId,targetId}=e.detail;
+  G.votes[fromId]=targetId;
+  checkAllVoted();
+});
+</script>
+</body>
+</html>
